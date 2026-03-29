@@ -1,12 +1,11 @@
 # OpenCode Agent-Browser Eval Framework
 
-This repository bundles the Bun-powered backend that drives agent-browser evaluations plus a React/Vite frontend scaffold. The workspace is organized so evaluation assets, OpenCode docx helpers, and the Vite app are easy to locate.
+This repository bundles the Bun-powered backend that drives agent-browser evaluations. The workspace is organized so evaluation assets and OpenCode docx helpers are easy to locate.
 
 ## Workspace Layout
 
 - `src/` - Bun server entrypoint (`src/index.ts`), shared helpers, and types that power backend eval services.
 - `eval/` - evaluation tooling and outputs. Includes `eval/run-eval.ts`, `eval/run-task-demo.ts`, `eval/eval-config.json`, the framework under `eval/src/eval/**`, `eval/eval-results/`, and `eval/eval-results.json`.
-- `apps/vite-react/` - React + Vite app scaffolded with `bun create vite --template react`. It keeps its own `package.json`, `bun.lock`, and `src/` sources.
 - `.opencode/skills/docx/refrences/` - docx helper scripts (`create-docx.js`, `create_docx.js`, `edit-docx.py`) colocated with the docx skill references.
 
 ## Evaluation Workflow
@@ -42,18 +41,6 @@ Outputs are written under `eval/eval-results/<timestamp>/`, and the latest summa
 
 5. `eval/run-task-demo.ts` now prints a pointer to the main CLI because the old MockAgent helpers were retired.
 
-## React + Vite Frontend
-
-The Vite app lives in `apps/vite-react/`.
-
-```bash
-bun --cwd apps/vite-react install
-bun --cwd apps/vite-react dev
-bun --cwd apps/vite-react build
-```
-
-You can deploy this folder independently or integrate it with the Bun backend.
-
 ## OpenCode docx Helpers
 
 Any loose docx scripts should live under `.opencode/skills/docx/refrences/`. If needed, update `.opencode/skills/docx/SKILL.md` to point to the new helper locations.
@@ -64,123 +51,3 @@ Any loose docx scripts should live under `.opencode/skills/docx/refrences/`. If 
 - `bun run --hot src/index.ts`
 
 `tsconfig.json` should include both `src/**/*` and `eval/src/**/*` so tooling can resolve moved eval helpers.
-
-## QMD Setup (Local Search Engine for Agents)
-
-QMD is an on-device hybrid search engine used by agents in this repo to search markdown notes, memory, and docs.
-
-Requirements:
-
-- Node.js >= 22
-- Bun >= 1.0
-
-### 1. Install
-
-```bash
-bun install -g @tobilu/qmd
-```
-
-### Windows-only shim fix
-
-The installed binary may be a bash shim that does not run in PowerShell. Create a `.cmd` wrapper once after install:
-
-```powershell
-$binDir = (bun pm bin -g)
-$nodeModules = Split-Path $binDir -Parent | Join-Path -ChildPath "node_modules"
-$qmdJs = "$nodeModules\@tobilu\qmd\dist\qmd.js"
-
-Set-Content "$binDir\qmd.cmd" "@echo off`r`nnode `"$qmdJs`" %*"
-Rename-Item "$binDir\qmd.exe" "qmd-bun.exe"
-```
-
-Then verify:
-
-```bash
-qmd --version
-```
-
-### 2. Add collections
-
-```bash
-qmd collection add ./memory/memory --name memory
-qmd collection add ./memory/sessions --name sessions
-qmd collection add ./memory/topics --name topics
-```
-
-Add context descriptions:
-
-```bash
-qmd context add qmd://memory/ "Agent memory: user profile, decisions, session summaries"
-qmd context add qmd://sessions/ "Parsed agent session transcripts and conversations"
-qmd context add qmd://topics/ "Topic-specific research and reference notes"
-```
-
-### 3. Index and embed
-
-```bash
-qmd update
-qmd embed
-```
-
-Note: first-time embedding can download about 2 GB of models.
-
-### 4. Verify
-
-```bash
-qmd status
-qmd search "memory"
-```
-
-## MCP Server Config (OpenCode / Claude)
-
-Use a local MCP process for QMD. This avoids schema/tool-loading issues.
-
-`opencode.json` should look like this:
-
-```json
-{
-  "mcp": {
-    "qmd": {
-      "type": "local",
-      "command": [
-        "node",
-        "C:\\Users\\<YourUser>\\node_modules\\@tobilu\\qmd\\dist\\qmd.js",
-        "mcp"
-      ],
-      "enabled": true,
-      "timeout": 60000
-    }
-  }
-}
-```
-
-`timeout: 60000` prevents false timeouts during model cold starts.
-
-## Quick Validation Checklist
-
-```powershell
-opencode mcp list
-opencode run "use qmd_search to find 'attack on titan' in memory and tell me what you find"
-```
-
-Expected:
-
-- `opencode mcp list` shows `qmd connected`
-- `qmd_search` returns results from `memory/memory/*.md`
-
-## Known Pitfalls and Fixes
-
-1. `Invalid input mcp.qmd`
-   - Cause: unsupported config shape (for example `"type": "url"`).
-   - Fix: use `"type": "local"` plus `"command": [...]`.
-2. `qmd: command not found` inside OpenCode/bash
-   - Cause: on Windows, `qmd` is a `.cmd` shim and may not exist in bash `PATH`.
-   - Fix: use MCP tools (`qmd_search`, `qmd_get`, `qmd_status`) via OpenCode, or run shell commands in PowerShell.
-3. `MCP error -32001: Request timed out`
-   - Cause: model cold start and short timeout.
-   - Fix: set `timeout` to `60000` in `opencode.json`.
-4. Search returns no result after writing a note
-   - Cause: index not refreshed.
-   - Fix: run `qmd update`.
-
-See `qmdreadme.md` for the complete operator guide.
