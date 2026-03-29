@@ -1,0 +1,36 @@
+{
+  "name": "adival",
+  "version": "1.0.0",
+  "description": "Evaluation framework and apps",
+  "scripts": {
+    "dev:app": "bun run --cwd apps/vite-react dev",
+    "eval": "bun run eval/run-eval.ts",
+    "watch-memory": "bun run watch-memory.ts",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:files": "prettier --write",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "csv-writer": "^1.6.0",
+    "docx": "^9.6.1",
+    "exceljs": "^4.4.0",
+    "exif-parser": "^0.1.12",
+    "exif-reader": "^2.0.3",
+    "hono": "^4.0.0",
+    "puppeteer-core": "^24.39.1",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.0.0",
+    "@types/node": "^25.5.0",
+    "chokidar": "^5.0.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@8.0.0"
+}

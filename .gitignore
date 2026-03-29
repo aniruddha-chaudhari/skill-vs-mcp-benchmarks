@@ -1,0 +1,14 @@
+.env
+node_modules
+
+unpacked
+test-unpacked
+nul
+eval/nul
+
+# Adding .opencode/.gitignore to the ignore list
+.opencode/.gitignore
+
+manager/*
+workbox/*
+.venv
